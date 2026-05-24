@@ -42,31 +42,36 @@ function SentimentChart({ sentiment }) {
         Sentiment Analysis
       </h2>
 
-      <ResponsiveContainer width="100%" height="100%">
+      <div className="w-full h-[320px]">
 
-        <PieChart>
+        <ResponsiveContainer width="100%" height="100%">
 
-          <Pie
-            data={data}
-            dataKey="value"
-            outerRadius={130}
-            label
-          >
-            {data.map((entry, index) => (
-              <Cell
-                key={index}
-                fill={COLORS[index]}
-              />
-            ))}
-          </Pie>
+          <PieChart>
 
-          <Tooltip />
+            <Pie
+              data={data}
+              dataKey="value"
+              outerRadius={130}
+              label
+            >
+              {data.map((entry, index) => (
+                <Cell
+                  key={index}
+                  fill={COLORS[index]}
+                />
+              ))}
+            </Pie>
 
-          <Legend />
+            <Tooltip />
 
-        </PieChart>
+            <Legend />
 
-      </ResponsiveContainer>
+          </PieChart>
+
+        </ResponsiveContainer>
+
+      </div>
+
     </div>
   );
 }

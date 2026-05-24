@@ -21,6 +21,7 @@ function Dashboard() {
   }
 
   return (
+
     <div className="min-h-screen bg-slate-950 text-white">
 
       <Navbar />
@@ -39,9 +40,28 @@ function Dashboard() {
 
         <div className="grid lg:grid-cols-2 gap-10 mt-10">
 
-          <SentimentChart sentiment={analysis.sentiments} />
+          <SentimentChart sentiment={analysis.sentiment} />
 
-          <KeywordCloud keywords={analysis.keywords} />
+          <div className="space-y-10">
+
+            <KeywordCloud keywords={analysis.keywords} />
+
+            <div className="bg-slate-900 rounded-3xl p-8 border border-slate-800">
+
+              <h2 className="text-3xl font-bold mb-8">
+                Word Cloud
+              </h2>
+
+              <img
+                src={`data:image/png;base64,${analysis.wordcloud}`}
+                alt="Word Cloud"
+                className="rounded-2xl w-full"
+              />
+
+            </div>
+
+          </div>
+
         </div>
 
         <div className="bg-slate-900 rounded-3xl p-8 mt-10 border border-slate-800">
@@ -53,6 +73,7 @@ function Dashboard() {
           <p className="mt-5 text-slate-300 leading-8 text-lg">
             {analysis.summary}
           </p>
+
         </div>
 
         <div className="bg-slate-900 rounded-3xl p-8 mt-10 border border-slate-800">
@@ -71,11 +92,15 @@ function Dashboard() {
                 {comment}
               </div>
             ))}
+
           </div>
+
         </div>
 
         <Footer />
+
       </div>
+
     </div>
   );
 }

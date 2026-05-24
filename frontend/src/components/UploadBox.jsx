@@ -4,116 +4,156 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 function UploadBox() {
+
   const navigate = useNavigate();
 
   const [file, setFile] = useState(null);
+
   const [comments, setComments] = useState("");
+
   const [loading, setLoading] = useState(false);
 
   const handleAnalyze = async () => {
+
     try {
+
       setLoading(true);
 
       const formData = new FormData();
 
+      // FILE
       if (file) {
-        formData.append("file", file);
+
+        formData.append(
+          "file",
+          file
+        );
       }
 
-      formData.append("comments", comments);
+      // TEXT COMMENTS
+      if (comments.trim()) {
 
-      // backend API
-      const uploadResponse = await axios.post(
-  "http://127.0.0.1:8000/upload",
-  formData
-);
+        const blob = new Blob(
+          [comments],
+          {
+            type: "text/plain",
+          }
+        );
 
-const uploadId = uploadResponse.data.upload_id;
+        formData.append(
+          "file",
+          blob,
+          "comments.txt"
+        );
+      }
 
-const analysisResponse = await axios.post(
-  `http://127.0.0.1:8000/analyze/${uploadId}`
-);
+      // API CALL
+      const analysisResponse = await axios.post(
 
-const data = analysisResponse.data;
+        "http://127.0.0.1:5000/api/analyze-file",
 
-const sentiments = data.sentiments || [];
+        formData,
 
-const positive = sentiments.filter(
-  (s) => s.sentiment.toLowerCase() === "positive"
-).length;
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-const negative = sentiments.filter(
-  (s) => s.sentiment.toLowerCase() === "negative"
-).length;
+      const data = analysisResponse.data;
+      console.log(data);
+      // SENTIMENT COUNTS
+      const positiveCount =
+        data.sentiment.positive || 0;
 
-const neutral = sentiments.filter(
-  (s) => s.sentiment.toLowerCase() === "neutral"
-).length;
+      const negativeCount =
+        data.sentiment.negative || 0;
 
-const total = sentiments.length || 1;
+      const neutralCount =
+        data.sentiment.neutral || 0;
 
-const formattedData = {
-  summary: data.summary,
+      const mixedCount =
+        data.sentiment.mixed || 0;
 
-  keywords: data.keywords,
+      const total =
+        positiveCount +
+        negativeCount +
+        neutralCount +
+        mixedCount;
 
-  comments: sentiments.map((s) => s.text),
+      // FORMAT DATA
+      const formattedData = {
 
-  sentiment: {
-    positive: Math.round((positive / total) * 100),
-    negative: Math.round((negative / total) * 100),
-    neutral: Math.round((neutral / total) * 100),
-    mixed: 0,
-  },
-};
+        summary: data.summary,
+
+        keywords: data.words.map(
+          (w) => w.word
+        ),
+
+        comments: data.items.map(
+          (item) => item.comment
+        ),
+
+        wordcloud:
+          data.wordcloud,
+
+        sentiment: {
+
+          positive:
+            total > 0
+              ? Math.round((positiveCount / total) * 100)
+              : 0,
+
+          negative:
+            total > 0
+              ? Math.round((negativeCount / total) * 100)
+              : 0,
+
+          neutral:
+            total > 0
+              ? Math.round((neutralCount / total) * 100)
+              : 0,
+
+          mixed:
+            total > 0
+              ? Math.round((mixedCount / total) * 100)
+              : 0,
+        },
+      };
+
+      // SAVE
+      localStorage.setItem(
+
+        "analysis",
+
+        JSON.stringify(formattedData)
+      );
+
+      // NAVIGATE
       navigate("/dashboard", {
+
         state: {
           analysis: formattedData,
         },
       });
 
     } catch (error) {
+
       console.log(error);
 
-      // TEMPORARY DEMO DATA
-      navigate("/dashboard", {
-        state: {
-          analysis: {
-            summary:
-              "Most stakeholders support environmental sustainability and healthcare reforms.",
+      alert(
+        "Analysis failed. Check backend terminal."
+      );
 
-            sentiment: {
-              positive: 58,
-              negative: 17,
-              neutral: 15,
-              mixed: 10,
-            },
-
-            keywords: [
-              "Environment",
-              "Healthcare",
-              "Transparency",
-              "Economy",
-            ],
-
-            comments: [
-              "This policy is very beneficial for climate action.",
-
-              "Healthcare improvements are necessary.",
-
-              "The taxation proposal needs more clarification.",
-
-              "Good initiative but implementation may be difficult.",
-            ],
-          },
-        },
-      });
     } finally {
+
       setLoading(false);
     }
   };
 
   return (
+
     <div className="bg-slate-900 border border-slate-700 rounded-3xl p-10">
 
       <h2 className="text-3xl font-bold text-center">
@@ -127,13 +167,20 @@ const formattedData = {
         </label>
 
         <div className="mt-3 border border-dashed border-cyan-400 rounded-2xl p-8 text-center">
-          <Upload size={45} className="mx-auto text-cyan-400" />
+
+          <Upload
+            size={45}
+            className="mx-auto text-cyan-400"
+          />
 
           <input
             type="file"
             className="mt-5"
-            onChange={(e) => setFile(e.target.files[0])}
+            onChange={(e) =>
+              setFile(e.target.files[0])
+            }
           />
+
         </div>
       </div>
 
@@ -148,16 +195,22 @@ const formattedData = {
           placeholder="Paste stakeholder comments here..."
           className="w-full mt-3 bg-slate-800 border border-slate-700 rounded-2xl p-5 outline-none focus:border-cyan-400"
           value={comments}
-          onChange={(e) => setComments(e.target.value)}
+          onChange={(e) =>
+            setComments(e.target.value)
+          }
         />
+
       </div>
 
       <button
         onClick={handleAnalyze}
         className="w-full mt-8 bg-cyan-500 hover:bg-cyan-400 transition py-4 rounded-2xl text-lg font-bold"
       >
-        {loading ? "Analyzing..." : "Analyze"}
+        {loading
+          ? "Analyzing..."
+          : "Analyze"}
       </button>
+
     </div>
   );
 }
